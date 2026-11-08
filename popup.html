@@ -2,8 +2,8 @@
 <html lang="en">
 
 <head>
-  <title>Chrome Regex Search</title>
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">
+  <meta charset="utf-8">
+  <title>Advanced Regex Search</title>
   <style type="text/css">
     :root {
       --bg-color: #1a1a1b;
@@ -14,6 +14,7 @@
       --text-color: #000000;
       --light-text: #e8eaed;
       --secondary-text: #5f6368;
+      --muted-text: #9aa0a6;
       --input-bg: #ffffff;
     }
 
@@ -31,21 +32,48 @@
       display: flex;
       align-items: center;
       gap: 4px;
+    }
 
+    /* Toolbar: title on the left, actions that apply to every search on the right */
+    .toolbar {
+      justify-content: space-between;
+      margin-bottom: 4px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted-text);
+    }
+
+    .brand img {
+      width: 16px;
+      height: 16px;
+    }
+
+    .searchRow + .searchRow {
+      margin-top: 4px;
     }
 
     .inputWrapper {
       position: relative;
       flex: 1;
+      min-width: 0;
       display: flex;
       align-items: center;
     }
 
-    #inputRegex {
+    .regexInput {
+      box-sizing: border-box;
       width: 100%;
-      padding: 4px 60px 4px 10px;
+      padding: 4px 90px 4px 10px;
+      font-family: Consolas, "Liberation Mono", Menlo, monospace;
       background-color: var(--input-bg);
       border: 1px solid var(--border-color);
+      border-left: 4px solid var(--row-color, var(--border-color));
       border-radius: 4px;
       font-size: 13px;
       color: var(--text-color);
@@ -53,11 +81,12 @@
       transition: border-color 0.2s;
     }
 
-    #inputRegex:focus {
+    .regexInput:focus {
       border-color: var(--accent-color);
+      border-left-color: var(--row-color, var(--accent-color));
     }
 
-    #numResults {
+    .numResults {
       position: absolute;
       right: 10px;
       font-size: 11px;
@@ -79,8 +108,6 @@
       justify-content: center;
       width: 26px;
       height: 26px;
-      /* background-color: var(--container-bg); */
-      /* border: 1px solid var(--border-color); */
       color: var(--light-text);
       text-decoration: none;
       border-radius: 4px;
@@ -90,15 +117,30 @@
     a.selected {
       background-color: var(--accent-color);
       color: #fff;
-      border-color: var(--accent-color);
     }
 
     a:hover {
       background-color: var(--hover-bg);
     }
 
-    .fa {
+    a.selected:hover {
+      background-color: var(--accent-color);
+      filter: brightness(1.1);
+    }
+
+    .caseButton {
+      font-weight: 700;
       font-size: 11px;
+    }
+
+    .icon {
+      width: 14px;
+      height: 14px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
     }
 
     #shortcuts,
@@ -155,8 +197,10 @@
       color: var(--secondary-text);
     }
 
-    .clearHistoryButton {
+    a.clearHistoryButton {
       display: inline-block;
+      width: auto;
+      height: auto;
       margin-top: 6px;
       color: #ff6b6b;
       font-size: 11px;
@@ -166,7 +210,7 @@
       border-radius: 4px;
     }
 
-    .clearHistoryButton:hover {
+    a.clearHistoryButton:hover {
       background: rgba(255, 107, 107, 0.1);
     }
 
@@ -183,40 +227,52 @@
     .error-chrome-regex:not(:empty) {
       display: block;
     }
+
+    .status-chrome-regex {
+      display: none;
+      margin-top: 4px;
+      font-size: 11px;
+      color: var(--light-text);
+    }
+
+    .status-chrome-regex:not(:empty) {
+      display: block;
+    }
   </style>
 </head>
 
 <body>
-  <div class="flexContainer">
-    <div class="inputWrapper">
-      <input id="inputRegex" type="text" placeholder="Enter regex..." autocomplete="off">
-      <span id="numResults"></span>
-    </div>
+  <div class="flexContainer toolbar">
+    <div class="brand"><img src="icons/icons_32.png" alt="">Advanced Regex Search</div>
     <div class="buttonGroup">
-      <a href="#" id="prev" title="Previous Match (Shift+Enter)"><i class="fa fa-angle-up"></i></a>
-      <a href="#" id="next" title="Next Match (Enter)"><i class="fa fa-angle-down"></i></a>
-      <a href="#" id="insensitive" title="Toggle Case Insensitive (Alt+I)"
-        style="font-weight: 700; font-size: 11px;">Aa</a>
-      <a href="#" id="copy-to-clipboard" title="Copy matches to clipboard (Alt+C)"><i class="fa fa-copy"></i></a>
-      <a href="#" id="clear" title="Clear Search"><i class="fa fa-trash-o"></i></a>
-      <a href="#" id="show-history" title="Search History (Alt+H)"><i class="fa fa-history"></i></a>
-      <a href="#" id="help" title="Keyboard Shortcuts (Alt+S)"><i class="fa fa-question-circle"></i></a>
+      <a href="#" id="add-search" title="Add another search (Alt+N)" aria-label="Add another search (Alt+N)"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></a>
+      <a href="#" id="copy-to-clipboard" title="Copy the current box's matches (Alt+C)" aria-label="Copy the current box's matches (Alt+C)"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></a>
+      <a href="#" id="clear-all" title="Clear all searches" aria-label="Clear all searches"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></a>
+      <a href="#" id="show-history" title="Search History (Alt+H)" aria-label="Search History (Alt+H)"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><polyline points="3 3 3 8 8 8"/><polyline points="12 7 12 12 15 14"/></svg></a>
+      <a href="#" id="help" title="Keyboard Shortcuts (Alt+S)" aria-label="Keyboard Shortcuts (Alt+S)"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></a>
     </div>
   </div>
+
+  <!-- Search rows are built by popup.js -->
+  <div id="searches"></div>
 
   <div id="shortcuts">
     <div class="shortcut-item"><span>Next Match</span> <span class="shortcut-key">Enter</span></div>
     <div class="shortcut-item"><span>Previous Match</span> <span class="shortcut-key">Shift+Enter</span></div>
-    <div class="shortcut-item"><span>Case Insensitive</span> <span class="shortcut-key">Alt+I</span></div>
-    <div class="shortcut-item"><span>Copy Matches</span> <span class="shortcut-key">Alt+C</span></div>
-    <div class="shortcut-item"><span>Clear History</span> <span class="shortcut-key">Alt+X</span></div>
+    <div class="shortcut-item"><span>Case Insensitive (current box)</span> <span class="shortcut-key">Alt+I</span></div>
+    <div class="shortcut-item"><span>Visible / All / Hidden Text (current box)</span> <span class="shortcut-key">Alt+V</span></div>
+    <div class="shortcut-item"><span>Add Search Box</span> <span class="shortcut-key">Alt+N</span></div>
+    <div class="shortcut-item"><span>Copy Matches (current box)</span> <span class="shortcut-key">Alt+C</span></div>
+    <div class="shortcut-item"><span>Clear History</span> <span class="shortcut-key">Alt+X (twice)</span></div>
     <div class="shortcut-item"><span>Toggle History</span> <span class="shortcut-key">Alt+H</span></div>
     <div class="shortcut-item"><span>Toggle Help</span> <span class="shortcut-key">Alt+S</span></div>
   </div>
 
   <div id="history"></div>
-  <span id="error" class="error-chrome-regex"></span>
+  <span id="status" class="status-chrome-regex" role="status"></span>
+  <span id="error" class="error-chrome-regex" role="alert"></span>
+  <script src="js/common.js"></script>
+  <script src="js/popup.js"></script>
 </body>
-<script type="text/javascript" src="js/popup.js"></script>
 
 </html>

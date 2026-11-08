@@ -30,7 +30,8 @@
   },
   "permissions": [
     "activeTab",
-    "storage"
+    "storage",
+    "clipboardWrite"
   ],
   "background": {
     "service_worker": "js/background.js"
@@ -43,6 +44,7 @@
         "file://*/*"
       ],
       "js": [
+        "js/common.js",
         "js/content.js"
       ]
     }

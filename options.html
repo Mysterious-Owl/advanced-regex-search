@@ -1,7 +1,8 @@
 <!doctype html>
 <html>
   <head>
-    <title>Chrome Regex Search Options</title>
+    <title>Advanced Regex Search Options</title>
+    <script src="js/common.js"></script>
     <script src="js/options.js"></script>
     <style type="text/css">
       .status-chrome-regex {
@@ -51,14 +52,14 @@
   </head>
   <body id="options">
     <div class = "panel panel-default">
-      <div class="panel-heading"><h3 class="panel-title">Chrome Regex Search Settings</h3></div>
+      <div class="panel-heading"><h3 class="panel-title">Advanced Regex Search Settings</h3></div>
       <div class="panel-body">
         <div class="panel panel-default">
           <div class="panel-heading">What colors should be used to highlight regex matches on the web page?</div>
           <div class="panel-body">
             <p><input id="highlightColor" type="color" /> <label for="highlightColor">Highlight color</label></p>
             <p><input id="selectedColor" type="color" /> <label for="selectedColor">Selected color</label></p>
-            <p><input id="textColor" type="color" /> <label for="colorText">Text color</label></p>
+            <p><input id="textColor" type="color" /> <label for="textColor">Text color</label></p>
             <p class="example-chrome-regex">This is <span id = "exampleHighlighted"> highlighted</span> text.</p>
             <p class="example-chrome-regex">This is <span id = "exampleSelected"> selected</span> text.</p>
           </div>
@@ -74,21 +75,21 @@
         <div class="panel panel-default">
           <div class="panel-heading">What's the maximum number of regex matches that should be highlighted on the web page?</div>
           <div class="panel-body">
-            <label for="maxResults">Max results</label> <input id="maxResults" type="text" name="maxResults" ></input>
+            <label for="maxResults">Max results</label> <input id="maxResults" type="text" inputmode="numeric" name="maxResults">
             <br />
             <small>The smaller this number is, the better your performance (especially for complex pages).</small>
           </div>
         </div>
         <div class="panel panel-default">
-          <div class="panel-heading">What's the maximum number of search history records that should be stored??</div>
+          <div class="panel-heading">What's the maximum number of search history records that should be stored?</div>
           <div class="panel-body">
-            <label for="maxHistoryLength">Max records</label> <input id="maxHistoryLength" type="text" name="maxHistoryLength" ></input>
+            <label for="maxHistoryLength">Max records</label> <input id="maxHistoryLength" type="text" inputmode="numeric" name="maxHistoryLength">
             <br />
-            <small>The default number of records is 30.</small>
+            <small>The default number of records is 30. Use 0 to keep no history.</small>
           </div>
         </div>
-        <button id="buttonSave" type="save">Save Settings</button>
-        <button id="buttonReset" type="reset">Reset to Defaults</button>
+        <button id="buttonSave" type="button">Save Settings</button>
+        <button id="buttonReset" type="button">Reset to Defaults</button>
         <p id="status" class="status-chrome-regex"></p>
       </div>
     </div>
