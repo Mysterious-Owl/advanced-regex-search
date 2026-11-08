@@ -23,69 +23,72 @@ var maxHistoryLength = MAX_HISTORY_LENGTH;
 /*** FUNCTIONS ***/
 /* Validate that a given pattern string is a valid regex */
 function isValidRegex(pattern) {
-  try{
+  try {
     var regex = new RegExp(pattern);
     return true;
-  } catch(e) {
+  } catch (e) {
     return false;
   }
 }
 
 /* Send message to content script of tab to select next result */
-function selectNext(){
+function selectNext() {
   chrome.tabs.query({
     'active': true,
     'currentWindow': true
-  }).then((tabs) => {
-    if ('undefined' != typeof tabs[0].id && tabs[0].id) {
-      chrome.tabs.sendMessage(tabs[0].id, {
-        'message' : 'selectNextNode'
-      });
-    }
-  });
+  },
+    function (tabs) {
+      if ('undefined' != typeof tabs[0].id && tabs[0].id) {
+        chrome.tabs.sendMessage(tabs[0].id, {
+          'message': 'selectNextNode'
+        });
+      }
+    });
 }
 
 /* Send message to content script of tab to select previous result */
-function selectPrev(){
+function selectPrev() {
   chrome.tabs.query({
     'active': true,
     'currentWindow': true
-  }).then((tabs) => {
-    if ('undefined' != typeof tabs[0].id && tabs[0].id) {
-      chrome.tabs.sendMessage(tabs[0].id, {
-        'message' : 'selectPrevNode'
-      });
-    }
-  });
+  },
+    function (tabs) {
+      if ('undefined' != typeof tabs[0].id && tabs[0].id) {
+        chrome.tabs.sendMessage(tabs[0].id, {
+          'message': 'selectPrevNode'
+        });
+      }
+    });
 }
 
 /* Send message to pass input string to content script of tab to find and highlight regex matches */
-function passInputToContentScript(){
+function passInputToContentScript() {
   passInputToContentScript(false);
 }
 
-function passInputToContentScript(configurationChanged){
+function passInputToContentScript(configurationChanged) {
   if (!processingKey) {
     var regexString = document.getElementById('inputRegex').value;
-    if  (!isValidRegex(regexString)) {
+    if (!isValidRegex(regexString)) {
       document.getElementById('inputRegex').style.backgroundColor = ERROR_COLOR;
     } else {
       document.getElementById('inputRegex').style.backgroundColor = WHITE_COLOR;
     }
-    chrome.tabs.query({ 
-      'active': true, 'currentWindow': true 
-    }).then((tabs) => {
-      if ('undefined' != typeof tabs[0].id && tabs[0].id) {
-        processingKey = true;
-        chrome.tabs.sendMessage(tabs[0].id, {
-          'message' : 'search',
-          'regexString' : regexString,
-          'configurationChanged' : configurationChanged,
-          'getNext' : true
-        });
-        sentInput = true;
+    chrome.tabs.query(
+      { 'active': true, 'currentWindow': true },
+      function (tabs) {
+        if ('undefined' != typeof tabs[0].id && tabs[0].id) {
+          processingKey = true;
+          chrome.tabs.sendMessage(tabs[0].id, {
+            'message': 'search',
+            'regexString': regexString,
+            'configurationChanged': configurationChanged,
+            'getNext': true
+          });
+          sentInput = true;
+        }
       }
-    });
+    );
   }
 }
 
@@ -93,19 +96,19 @@ function createHistoryLineElement(text) {
   var deleteEntrySpan = document.createElement('span');
   deleteEntrySpan.className = 'historyDeleteEntry'
   deleteEntrySpan.textContent = '\u2715';
-  deleteEntrySpan.addEventListener('click', function() {
+  deleteEntrySpan.addEventListener('click', function () {
     for (var i = searchHistory.length - 1; i >= 0; i--) {
       if (searchHistory[i] == text) {
         searchHistory.splice(i, 1);
       }
     }
-    chrome.storage.local.set({searchHistory: searchHistory});
+    chrome.storage.local.set({ searchHistory: searchHistory });
     updateHistoryDiv();
   });
   var linkSpan = document.createElement('span');
   linkSpan.className = 'historyLink'
   linkSpan.textContent = text;
-  linkSpan.addEventListener('click', function() {
+  linkSpan.addEventListener('click', function () {
     if (document.getElementById('inputRegex').value !== text) {
       document.getElementById('inputRegex').value = text;
       passInputToContentScript();
@@ -155,7 +158,7 @@ function addToHistory(regex) {
     if (searchHistory.length > maxHistoryLength) {
       searchHistory.splice(0, searchHistory.length - maxHistoryLength);
     }
-    chrome.storage.local.set({searchHistory: searchHistory});
+    chrome.storage.local.set({ searchHistory: searchHistory });
     updateHistoryDiv();
   }
 }
@@ -163,91 +166,109 @@ function addToHistory(regex) {
 function setHistoryVisibility(makeVisible) {
   document.getElementById('history').style.display = makeVisible ? 'block' : 'none';
   document.getElementById('show-history').title = makeVisible ? HIDE_HISTORY_TITLE : SHOW_HISTORY_TITLE;
-  if(makeVisible) {
+  if (makeVisible) {
     document.getElementById('show-history').className = 'selected';
   } else {
     document.getElementById('show-history').className = '';
   }
 }
 
+function toggleHistoryVisibility() {
+  var invisibleNow = (document.getElementById('history').style.display === 'none')
+  setHistoryVisibility(invisibleNow);
+  updateHistoryDiv();
+}
+
 function setCaseInsensitiveElement() {
-  chrome.storage.local.get({
-    'caseInsensitive':DEFAULT_CASE_INSENSITIVE
-  }).then((result) => {
-    document.getElementById('insensitive').title = result.caseInsensitive ? DISABLE_CASE_INSENSITIVE_TITLE : ENABLE_CASE_INSENSITIVE_TITLE;
-    if(result.caseInsensitive) {
-      document.getElementById('insensitive').className = 'selected';
-    } else {
-      document.getElementById('insensitive').className = '';
-    }
-  });
+  var caseInsensitive = chrome.storage.local.get({ 'caseInsensitive': DEFAULT_CASE_INSENSITIVE },
+    function (result) {
+      document.getElementById('insensitive').title = result.caseInsensitive ? DISABLE_CASE_INSENSITIVE_TITLE : ENABLE_CASE_INSENSITIVE_TITLE;
+      if (result.caseInsensitive) {
+        document.getElementById('insensitive').className = 'selected';
+      } else {
+        document.getElementById('insensitive').className = '';
+      }
+    });
 }
 
 function toggleCaseInsensitive() {
   var caseInsensitive = document.getElementById('insensitive').className == 'selected';
   document.getElementById('insensitive').title = caseInsensitive ? ENABLE_CASE_INSENSITIVE_TITLE : DISABLE_CASE_INSENSITIVE_TITLE;
-  if(caseInsensitive) {
+  if (caseInsensitive) {
     document.getElementById('insensitive').className = '';
   } else {
     document.getElementById('insensitive').className = 'selected';
   }
   sentInput = false;
-  chrome.storage.local.set({caseInsensitive: !caseInsensitive});
+  chrome.storage.local.set({ caseInsensitive: !caseInsensitive });
   passInputToContentScript(true);
+}
+
+function copyToClipboard() {
+  chrome.tabs.query(
+    {
+      'active': true,
+      'currentWindow': true
+    },
+    function (tabs) {
+      if ('undefined' != typeof tabs[0].id && tabs[0].id) {
+        chrome.tabs.sendMessage(tabs[0].id, {
+          'message': 'copyToClipboard'
+        });
+      }
+    }
+  );
 }
 
 function clearSearchHistory() {
   searchHistory = [];
-  chrome.storage.local.set({searchHistory: searchHistory});
+  chrome.storage.local.set({ searchHistory: searchHistory });
   updateHistoryDiv();
 }
 
-
 /*** LISTENERS ***/
-document.getElementById('next').addEventListener('click', function() {
+document.getElementById('next').addEventListener('click', function () {
   selectNext();
 });
 
-document.getElementById('prev').addEventListener('click', function() {
+document.getElementById('prev').addEventListener('click', function () {
   selectPrev();
 });
 
-document.getElementById('clear').addEventListener('click', function() {
+document.getElementById('clear').addEventListener('click', function () {
   sentInput = false;
   document.getElementById('inputRegex').value = '';
   passInputToContentScript();
   document.getElementById('inputRegex').focus();
 });
 
-document.getElementById('show-history').addEventListener('click', function() {
+document.getElementById('show-history').addEventListener('click', function () {
   var makeVisible = document.getElementById('history').style.display == 'none';
   setHistoryVisibility(makeVisible);
-  chrome.storage.local.set({isSearchHistoryVisible: makeVisible});
+  chrome.storage.local.set({ isSearchHistoryVisible: makeVisible });
 });
 
-document.getElementById('insensitive').addEventListener('click', function() {
+document.getElementById('insensitive').addEventListener('click', function () {
   toggleCaseInsensitive();
 });
 
 document.getElementById('copy-to-clipboard').addEventListener('click', function () {
-  chrome.tabs.query({
-      'active': true,
-      'currentWindow': true
-    }).then((tabs) => {
-      if ('undefined' != typeof tabs[0].id && tabs[0].id) {
-        chrome.tabs.sendMessage(tabs[0].id, {
-          'message': 'copyToClipboard'
-        });
-      }
-    });
+  copyToClipboard();
 });
 
-/* Received returnSearchInfo message, populate popup UI */ 
-chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+document.getElementById('help').addEventListener('click', function () {
+  var shortcuts = document.getElementById('shortcuts');
+  var isVisible = shortcuts.style.display === 'block';
+  shortcuts.style.display = isVisible ? 'none' : 'block';
+  this.className = isVisible ? '' : 'selected';
+});
+
+/* Received returnSearchInfo message, populate popup UI */
+chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   if ('returnSearchInfo' == request.message) {
     processingKey = false;
     if (request.numResults > 0) {
-      document.getElementById('numResults').textContent = String(request.currentSelection+1) + ' of ' + String(request.numResults);
+      document.getElementById('numResults').textContent = String(request.currentSelection + 1) + ' of ' + String(request.numResults);
     } else {
       document.getElementById('numResults').textContent = String(request.currentSelection) + ' of ' + String(request.numResults);
     }
@@ -264,85 +285,110 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
 });
 
 /* Key listener for selectNext and selectPrev
- * Thanks a lot to Cristy from StackOverflow for this AWESOME solution
- * http://stackoverflow.com/questions/5203407/javascript-multiple-keys-pressed-at-once */
-var map = [];
-onkeydown = onkeyup = function(e) {
-    map[e.key] = e.type == 'keydown';
-    if (document.getElementById('inputRegex') === document.activeElement) { //input element is in focus
-      if (!map['Shift'] && map['Enter']) { //ENTER
+ * Improved to use standard keyboard event properties */
+window.addEventListener('keydown', function (e) {
+  if (document.getElementById('inputRegex') === document.activeElement) { //input element is in focus
+    if (e.key === 'Enter') {
+      if (e.shiftKey) { // SHIFT + ENTER
+        selectPrev();
+      } else { // ENTER
         if (sentInput) {
           selectNext();
         } else {
           passInputToContentScript();
         }
-      } else if (map['Shift'] && map['Enter']) { //SHIFT + ENTER
-        selectPrev();
       }
+      e.preventDefault();
     }
-}
+  }
+
+  if (e.altKey) {
+    var key = e.key.toLowerCase();
+    if (key === 'i') {
+      toggleCaseInsensitive();
+      e.preventDefault();
+    } else if (key === 'c') {
+      copyToClipboard();
+      e.preventDefault();
+    } else if (key === 'x') {
+      clearSearchHistory();
+      e.preventDefault();
+    } else if (key === 'h') {
+      toggleHistoryVisibility();
+      e.preventDefault();
+    } else if (key === 's') {
+      var shortcuts = document.getElementById('shortcuts');
+      var isVisible = shortcuts.style.display === 'block';
+      shortcuts.style.display = isVisible ? 'none' : 'block';
+      document.getElementById('help').className = isVisible ? '' : 'selected';
+      e.preventDefault();
+    }
+  }
+});
 /*** LISTENERS ***/
 
 /*** INIT ***/
 /* Retrieve from storage whether we should use instant results or not */
 chrome.storage.local.get({
-    'instantResults' : DEFAULT_INSTANT_RESULTS,
-    'maxHistoryLength' : MAX_HISTORY_LENGTH,
-    'searchHistory' : null,
-    'isSearchHistoryVisible' : false
-  }).then((result) => {
-    if(result.instantResults) {
-      document.getElementById('inputRegex').addEventListener('input', function() {
+  'instantResults': DEFAULT_INSTANT_RESULTS,
+  'maxHistoryLength': MAX_HISTORY_LENGTH,
+  'searchHistory': null,
+  'isSearchHistoryVisible': false
+},
+  function (result) {
+    if (result.instantResults) {
+      document.getElementById('inputRegex').addEventListener('input', function () {
         passInputToContentScript();
       });
     } else {
-      document.getElementById('inputRegex').addEventListener('change', function() {
+      document.getElementById('inputRegex').addEventListener('change', function () {
         passInputToContentScript();
       });
     }
     console.log(result);
-    if(result.maxHistoryLength) {
+    if (result.maxHistoryLength) {
       maxHistoryLength = result.maxHistoryLength;
     }
-    if(result.searchHistory) {
+    if (result.searchHistory) {
       searchHistory = result.searchHistory.slice(0);
     } else {
       searchHistory = [];
     }
     setHistoryVisibility(result.isSearchHistoryVisible);
     updateHistoryDiv();
-  });
+  }
+);
 
 /* Get search info if there is any */
 chrome.tabs.query({
   'active': true,
   'currentWindow': true
-}).then((tabs) => {
-  if ('undefined' != typeof tabs[0].id && tabs[0].id) {
-    chrome.tabs.sendMessage(tabs[0].id, {
-      'message' : 'getSearchInfo'
-    }).then((response) => {
-      if (response) {
-        // Content script is active
-        console.log(response);
-      } else {
-        console.log(response);
-        document.getElementById('error').textContent = ERROR_TEXT;
-      }
-    });
-  }
-});
+},
+  function (tabs) {
+    if ('undefined' != typeof tabs[0].id && tabs[0].id) {
+      chrome.tabs.sendMessage(tabs[0].id, {
+        'message': 'getSearchInfo'
+      }, function (response) {
+        if (response) {
+          // Content script is active
+          console.log(response);
+        } else {
+          console.log(response);
+          document.getElementById('error').textContent = ERROR_TEXT;
+        }
+      });
+    }
+  });
 
 /* Focus onto input form */
 document.getElementById('inputRegex').focus();
-window.setTimeout( 
-  function(){document.getElementById('inputRegex').select();}, 0);
+window.setTimeout(
+  function () { document.getElementById('inputRegex').select(); }, 0);
 //Thanks to http://stackoverflow.com/questions/480735#comment40578284_14573552
 
 var makeVisible = document.getElementById('history').style.display == 'none';
 setHistoryVisibility(makeVisible);
-chrome.storage.local.set({isSearchHistoryVisible: makeVisible});
+chrome.storage.local.set({ isSearchHistoryVisible: makeVisible });
 
 setCaseInsensitiveElement();
 /*** INIT ***/
-

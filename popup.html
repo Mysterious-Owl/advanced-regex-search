@@ -1,119 +1,222 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <title>Chrome Regex Search</title>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">
-    <style type="text/css">
-      a:link, a:visited {
-        display: block;
-        width: 2em;  
-        padding: 0.2em;
-        line-height: 1.6;
-        background-color: #f2f2f2;
-        border: 1px solid transparent;
-         border-color: #aaa;
-        color: #000;
-        text-decoration: bold;
-        text-align: center;
-        float: right;
-        -webkit-box-shadow: inset 0 0 30px #fff;
-        box-shadow: inset 0 0 30px #fff;
-        border-radius: 2px;
-        -webkit-text-stroke: 2px rgba(0,0,0,1);
-      }
-      a.selected {
-        background-color: #eaeaea;
-        color: #000;
-        -webkit-box-shadow: inset 0 3px 3px rgba(0, 0, 0, .125);
-               box-shadow: inset 0 3px 3px rgba(0, 0, 0, .125);
-      }
-      a:hover {
-        background-color: #dadada;
-        color: #000;
-       -webkit-box-shadow: inset 0 3px 3px rgba(0, 0, 0, .125);
-               box-shadow: inset 0 3px 3px rgba(0, 0, 0, .125);
-      }
-      #insensitive {
-        -webkit-text-stroke: 1px rgba(0,0,0,1);
-      }
-      #clear {
-        -webkit-text-stroke: 1px rgba(0,0,0,1);
-      }
-      #show-history {
-        -webkit-text-stroke: 0px;
-      }
-      .flexContainer {
-        position: relative;
-        text-align: right;
-        display: flex;
-      }
-      #inputRegex {
-        width: 22em;
-        border-radius: 2px;
-        padding-right: 5em;
-       -webkit-box-shadow: 0 1px 1px rgba(0, 0, 0, .125);
-               box-shadow: 0 1px 1px rgba(0, 0, 0, .125);
-      }
-      #numResults {
-        position: absolute;
-        top: 0.25em;
-        right: 14.5em;
-        min-width: 4em;
-        max-width: 5em;
-        overflow:auto;
-        white-space: nowrap;
-        height: 1.6;
-        font-size: 10pt;
-      }
-      #history {
-        margin: 4px 2px;
-        display: none;
-      }
-      .historyDeleteEntry {
-        color: #c00;
-        cursor: pointer;
-        margin-right: 4px;
-        font-size: 0.8em;
-      }
-      .historyLink {
-        color: #09d;
-        cursor: pointer;
-      }
-      .historyIsEmptyMessage {
-        font-style: italic;
-        color: #555;
-      }
-      
-      .clearHistoryButton {
-        color: #000; 
-        text-decoration: none;
-        float: left !important;
-        width: 7em !important;
-        -webkit-text-stroke: 0.5px rgba(0,0,0,1) !important;
-        margin-bottom: 0.2em;
-      }
 
-      body {
-        background-color: #dddddd;
-      }
-      .error-chrome-regex {
-        color: #FF0000;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="flexContainer">
-      <input id="inputRegex" type="text" name="inputRegex"></input><span id="numResults"></span>
-      <a href="#" id="prev" type="button" title="Previous Match"><i class="fa fa-angle-up"></i></a>
-      <a href="#" id="next" type="button" title="Next Match"><i class="fa fa-angle-down"></i></a>
-      <a href="#" id="insensitive" type="button" title="Case Insensitive"><i class="fa fa-info"></i></a>
-      <a href="#" id="copy-to-clipboard" type="button" title="Copy matches to clipboard"><i class="fa fa-copy"></i></a>
-      <a href="#" id="clear" type="button" title="Clear"><i class="fa fa-trash-o"></i></a>
-      <a href="#" class="selected" id="show-history" type="button" title="History"><i class="fa fa-history"></i></a>
+<head>
+  <title>Chrome Regex Search</title>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">
+  <style type="text/css">
+    :root {
+      --bg-color: #1a1a1b;
+      --container-bg: #2d2d2e;
+      --border-color: #3e3e40;
+      --accent-color: #4dabf7;
+      --hover-bg: #3e3e40;
+      --text-color: #000000;
+      --light-text: #e8eaed;
+      --secondary-text: #5f6368;
+      --input-bg: #ffffff;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      margin: 0;
+      padding: 6px;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      width: 440px;
+      color: var(--light-text);
+      overflow: hidden;
+    }
+
+    .flexContainer {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+
+    }
+
+    .inputWrapper {
+      position: relative;
+      flex: 1;
+      display: flex;
+      align-items: center;
+    }
+
+    #inputRegex {
+      width: 100%;
+      padding: 4px 60px 4px 10px;
+      background-color: var(--input-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      font-size: 13px;
+      color: var(--text-color);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    #inputRegex:focus {
+      border-color: var(--accent-color);
+    }
+
+    #numResults {
+      position: absolute;
+      right: 10px;
+      font-size: 11px;
+      color: var(--secondary-text);
+      pointer-events: none;
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .buttonGroup {
+      display: flex;
+      gap: 1px;
+    }
+
+    a:link,
+    a:visited {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px;
+      height: 26px;
+      /* background-color: var(--container-bg); */
+      /* border: 1px solid var(--border-color); */
+      color: var(--light-text);
+      text-decoration: none;
+      border-radius: 4px;
+      transition: all 0.2s;
+    }
+
+    a.selected {
+      background-color: var(--accent-color);
+      color: #fff;
+      border-color: var(--accent-color);
+    }
+
+    a:hover {
+      background-color: var(--hover-bg);
+    }
+
+    .fa {
+      font-size: 11px;
+    }
+
+    #shortcuts,
+    #history {
+      margin-top: 6px;
+      padding: 8px;
+      background: var(--container-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      display: none;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .shortcut-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 4px 0;
+      font-size: 12px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .shortcut-item:last-child {
+      border-bottom: none;
+    }
+
+    .shortcut-key {
+      font-family: monospace;
+      background: #1a1a1b;
+      padding: 1px 6px;
+      border-radius: 3px;
+      color: var(--accent-color);
+      border: 1px solid var(--border-color);
+    }
+
+    .historyDeleteEntry {
+      color: #ff6b6b;
+      cursor: pointer;
+      margin-right: 8px;
+    }
+
+    .historyLink {
+      color: var(--accent-color);
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .historyLink:hover {
+      text-decoration: underline;
+    }
+
+    .historyIsEmptyMessage {
+      font-style: italic;
+      color: var(--secondary-text);
+    }
+
+    .clearHistoryButton {
+      display: inline-block;
+      margin-top: 6px;
+      color: #ff6b6b;
+      font-size: 11px;
+      text-decoration: none;
+      font-weight: 600;
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+
+    .clearHistoryButton:hover {
+      background: rgba(255, 107, 107, 0.1);
+    }
+
+    .error-chrome-regex {
+      display: none;
+      margin-top: 4px;
+      color: #ff6b6b;
+      font-size: 11px;
+      background: rgba(255, 107, 107, 0.1);
+      padding: 6px;
+      border-radius: 4px;
+    }
+
+    .error-chrome-regex:not(:empty) {
+      display: block;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="flexContainer">
+    <div class="inputWrapper">
+      <input id="inputRegex" type="text" placeholder="Enter regex..." autocomplete="off">
+      <span id="numResults"></span>
     </div>
-    <div id="history">
+    <div class="buttonGroup">
+      <a href="#" id="prev" title="Previous Match (Shift+Enter)"><i class="fa fa-angle-up"></i></a>
+      <a href="#" id="next" title="Next Match (Enter)"><i class="fa fa-angle-down"></i></a>
+      <a href="#" id="insensitive" title="Toggle Case Insensitive (Alt+I)"
+        style="font-weight: 700; font-size: 11px;">Aa</a>
+      <a href="#" id="copy-to-clipboard" title="Copy matches to clipboard (Alt+C)"><i class="fa fa-copy"></i></a>
+      <a href="#" id="clear" title="Clear Search"><i class="fa fa-trash-o"></i></a>
+      <a href="#" id="show-history" title="Search History (Alt+H)"><i class="fa fa-history"></i></a>
+      <a href="#" id="help" title="Keyboard Shortcuts (Alt+S)"><i class="fa fa-question-circle"></i></a>
     </div>
-    <span id="error" class="error-chrome-regex"></span>
-  </body>
-  <script type="text/javascript" src="js/popup.js"></script>
+  </div>
+
+  <div id="shortcuts">
+    <div class="shortcut-item"><span>Next Match</span> <span class="shortcut-key">Enter</span></div>
+    <div class="shortcut-item"><span>Previous Match</span> <span class="shortcut-key">Shift+Enter</span></div>
+    <div class="shortcut-item"><span>Case Insensitive</span> <span class="shortcut-key">Alt+I</span></div>
+    <div class="shortcut-item"><span>Copy Matches</span> <span class="shortcut-key">Alt+C</span></div>
+    <div class="shortcut-item"><span>Clear History</span> <span class="shortcut-key">Alt+X</span></div>
+    <div class="shortcut-item"><span>Toggle History</span> <span class="shortcut-key">Alt+H</span></div>
+    <div class="shortcut-item"><span>Toggle Help</span> <span class="shortcut-key">Alt+S</span></div>
+  </div>
+
+  <div id="history"></div>
+  <span id="error" class="error-chrome-regex"></span>
+</body>
+<script type="text/javascript" src="js/popup.js"></script>
+
 </html>
